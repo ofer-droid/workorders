@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>הוראות עבודה</title>
+</head>
+<body style="font-family:Arial,sans-serif;padding:24px;color:#1d2433">
+<p id="ld">טוען…</p>
+<script>
+// Loader: fetches the form page from the Apps Script server and talks to it with fetch,
+// so it works on any phone regardless of which Google account is signed in.
+var API_URL = 'https://script.google.com/macros/s/AKfycbyMUx3cqByXN-T9-wczgt0HUku6PEhIheCGmIZIYXBb8Wqs4IBaCHijTfhVSLPJ7RP1/exec';
+function post(body) {
+  return fetch(API_URL, { method: 'POST', redirect: 'follow', body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+}
+window.google = { script: { run: (function mk(ok, fail) {
+  var o = { withSuccessHandler: function (f) { return mk(f, fail); }, withFailureHandler: function (f) { return mk(ok, f); } };
+  function call(fn, pin, args) {
+    post({ fn: fn, pin: pin, args: args })
+      .then(function (j) { if (j.ok) { ok && ok(j.data); } else { fail && fail(new Error(j.error)); } })
+      .catch(function (e) { fail && fail(new Error((e && e.message) || 'network')); });
+  }
+  o.rpc = function (pin, fn, args) { call(fn, pin, args); };
+  o.checkPin = function (pin) { call('checkPin', pin, []); };
+  return o;
+})() } };
+post({ fn: 'page' }).then(function (j) {
+  if (!j.ok) throw new Error(j.error);
+  var fl = (new URLSearchParams(location.search).get('fl') || '').toUpperCase();
+  var h = j.data
+    .replace(/var FL = [^;\n]*;/, 'var FL = ' + JSON.stringify(fl) + ';')
+    .replace(/var BASE = [^;\n]*;/, 'var BASE = ' + JSON.stringify(location.origin + location.pathname) + ';')
+    .replace('<base target="_top">', '');
+  document.open(); document.write(h); document.close();
+  document.title = fl ? 'דיווח ' + fl : 'הוראות עבודה פתוחות';
+}).catch(function (e) {
+  document.getElementById('ld').textContent = 'שגיאה בטעינת הטופס: ' + e.message + ' — נסו לרענן את הדף.';
+});
+</script>
+</body>
+</html>
